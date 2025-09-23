@@ -25,7 +25,9 @@ def filter_ghed_indicators(
     return df
 
 
-def add_country_info(df: pd.DataFrame, country_column: str = "iso3_code") -> pd.DataFrame:
+def add_country_info(
+    df: pd.DataFrame, country_column: str = "iso3_code"
+) -> pd.DataFrame:
 
     if country_column != "iso3_code":
         df["iso3_code"] = resolve_places(

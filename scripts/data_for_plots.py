@@ -9,6 +9,7 @@ from common import (
 
 from scripts.logger import logger
 
+
 def get_available_indicators_by_country_year(
     ghed_df: pd.DataFrame, save_csv: bool = True
 ) -> pd.DataFrame:
@@ -41,6 +42,7 @@ def get_available_indicators_by_country_year(
 
     return available_pct_full
 
+
 def get_che_life_expectancy(ghed_df: pd.DataFrame) -> pd.DataFrame:
 
     le_indicators = ["WHOSIS_000001"]  # Life expectancy at birth
@@ -63,7 +65,9 @@ def get_che_life_expectancy(ghed_df: pd.DataFrame) -> pd.DataFrame:
     return df_merged
 
 
-def _add_roll_avgs(df: pd.DataFrame, roll_periods: int = 5, min_periods: int = 5) -> pd.DataFrame:
+def _add_roll_avgs(
+    df: pd.DataFrame, roll_periods: int = 5, min_periods: int = 5
+) -> pd.DataFrame:
     """Add rolling average column to a dataframe with columns country_name, indicator_code, year, value
 
     Args:
@@ -73,61 +77,74 @@ def _add_roll_avgs(df: pd.DataFrame, roll_periods: int = 5, min_periods: int = 5
 
     """
 
-    return (df
-            .assign(rolling_avg = lambda d: d.groupby(["country_name", "indicator_code"])["value"]
-                    .transform(lambda x: x.rolling(roll_periods, min_periods=min_periods).mean())
-                    )
-            )
+    return df.assign(
+        rolling_avg=lambda d: d.groupby(["country_name", "indicator_code"])[
+            "value"
+        ].transform(lambda x: x.rolling(roll_periods, min_periods=min_periods).mean())
+    )
 
 
 def chart_bar_immunisation(ghed_df: pd.DataFrame) -> None:
     """Create chart data for immunisation external share chart"""
 
-    immunisation_inds = ["hc62_ext_usd2022",  # external spending for immunisation programs
-                         "hc62_usd2022"  # total spending for immunisation programs
-                         ]
+    immunisation_inds = [
+        "hc62_ext_usd2022",  # external spending for immunisation programs
+        "hc62_usd2022",  # total spending for immunisation programs
+    ]
     # preprocess the data
-    df = (ghed_df
-          .loc[lambda d: d.indicator_code.isin(immunisation_inds), ["country_name", "year", "indicator_code", "value"]]
-          .dropna(subset=["value"])
-          .loc[lambda d: d.groupby(["country_name", "indicator_code"])["year"].transform("max") >= 2021] # keep only countries with data in 2021 or later
-          .reset_index(drop=True)
-        )
+    df = (
+        ghed_df.loc[
+            lambda d: d.indicator_code.isin(immunisation_inds),
+            ["country_name", "year", "indicator_code", "value"],
+        ]
+        .dropna(subset=["value"])
+        .loc[
+            lambda d: d.groupby(["country_name", "indicator_code"])["year"].transform(
+                "max"
+            )
+            >= 2021
+        ]  # keep only countries with data in 2021 or later
+        .reset_index(drop=True)
+    )
 
     # add rolling averages
     df = _add_roll_avgs(df, roll_periods=5, min_periods=3)
 
     # calculate external share of total
-    df = (df
-          .pivot(index=["country_name", "year"], columns="indicator_code", values="rolling_avg")
-          .reset_index()
-          .assign(ext_pct=lambda d: d.hc62_ext_usd2022 / d.hc62_usd2022 * 100)
-          )
+    df = (
+        df.pivot(
+            index=["country_name", "year"],
+            columns="indicator_code",
+            values="rolling_avg",
+        )
+        .reset_index()
+        .assign(ext_pct=lambda d: d.hc62_ext_usd2022 / d.hc62_usd2022 * 100)
+    )
 
     # filter the data for countries with at least 50% external share in most recent year, where recent year is 2021 or later
-    df = (df
-          .loc[lambda d: d.groupby("country_name")["year"].transform("max") == d["year"]]
-          .loc[lambda d: d.ext_pct >= 50]
-          .sort_values("ext_pct", ascending=False)
-          )
-
+    df = (
+        df.loc[
+            lambda d: d.groupby("country_name")["year"].transform("max") == d["year"]
+        ]
+        .loc[lambda d: d.ext_pct >= 50]
+        .sort_values("ext_pct", ascending=False)
+    )
 
     # format data for downloadable csv
-    df_download = (df
-                   .rename(columns = {"hc62_ext_usd2022": "External spending on immunisation programs (5yr rolling avg, millions USD constant 2022)",
-           "hc62_usd2022": "Total spending on immunisation programs (5yr rolling avg, millions USD constant 2022)",
-           "ext_pct": "External spending as % of total immunisation spending (5yr rolling avg)"}
-           )
-                   )
+    df_download = df.rename(
+        columns={
+            "hc62_ext_usd2022": "External spending on immunisation programs (5yr rolling avg, millions USD constant 2022)",
+            "hc62_usd2022": "Total spending on immunisation programs (5yr rolling avg, millions USD constant 2022)",
+            "ext_pct": "External spending as % of total immunisation spending (5yr rolling avg)",
+        }
+    )
 
     # export chart and data
-    df_download.to_csv(Paths.output / "chart_data_immunisation_external_share.csv", index=False)
+    df_download.to_csv(
+        Paths.output / "chart_data_immunisation_external_share.csv", index=False
+    )
     df.to_csv(Paths.output / "chart_immunisation_external_share.csv", index=False)
     logger.info("Exported immunisation external share chart and data")
-
-
-
-
 
 
 if __name__ == "__main__":
