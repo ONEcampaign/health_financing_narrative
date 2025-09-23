@@ -1,7 +1,7 @@
 import pandas as pd
 
 from scripts.config import Paths
-from common import (
+from scripts.common import (
     get_ghed,
     add_country_info,
     merge_ghed,
@@ -10,9 +10,8 @@ from common import (
 from scripts.logger import logger
 
 
-def get_available_indicators_by_country_year(
-    ghed_df: pd.DataFrame, save_csv: bool = True
-) -> pd.DataFrame:
+def heatmap_available_indicators(
+    ghed_df: pd.DataFrame) -> None:
 
     available_pct = (
         ghed_df.groupby(["year", "iso3_code"])["value"]
@@ -37,20 +36,18 @@ def get_available_indicators_by_country_year(
         ["country_name", "year"]
     )
 
-    if save_csv:
-        available_pct_full.to_csv(Paths.output / "available_pct.csv", index=False)
-
-    return available_pct_full
+    available_pct_full.to_csv(Paths.output / "chart_data_available_indicators.csv", index=False)
+    logger.info("Exported available indicators chart and data")
 
 
-def get_che_life_expectancy(ghed_df: pd.DataFrame) -> pd.DataFrame:
+def scatter_gghe_pc_vs_life_expectancy(ghed_df: pd.DataFrame) -> None:
 
     le_indicators = ["WHOSIS_000001"]  # Life expectancy at birth
     le_sexes = ["SEX_BTSX"]  # both sexes
     le_columns = {
         "SpatialDimValueCode": "iso3_code",
         "Period": "year",
-        "Value": "le_birth",
+        "Value": "Life expectancy (years)",
     }
     le_df_raw = pd.read_csv(Paths.life_expectancy)
     le_df_raw["Value"] = le_df_raw["Value"].str.extract(r"^([\d\.]+)").astype(float)
@@ -58,11 +55,28 @@ def get_che_life_expectancy(ghed_df: pd.DataFrame) -> pd.DataFrame:
         "IndicatorCode in @le_indicators and Dim1ValueCode in @le_sexes"
     )[le_columns.keys()].rename(columns=le_columns)
 
-    ghed_indicators = ["che_gdp", "che_pc_usd"]
+    ghed_indicators = ["gghed_usd2022_pc"]
 
-    df_merged = merge_ghed(ghed_df, ghed_indicators, le_df, ["le_birth"], "che_le")
+    df = merge_ghed(ghed_df, ghed_indicators, le_df, ["Life expectancy (years)"])
 
-    return df_merged
+    df_download = (df.
+        drop(columns=["iso3_code", "region"])
+        .rename(
+            columns={
+                ghed_indicators[0] : "Government health expenditure per capita",
+                "income_level": "Income level",
+                "country_name": "Country",
+            }
+        )
+    )
+
+    # export chart and data
+    df_download.to_csv(
+        Paths.output / "chart_data_government_spending_per_capita_life_expectancy.csv", index=False
+    )
+    df.to_csv(Paths.output / "chart_government_spending_per_capita_life_expectancy.csv", index=False)
+    logger.info("Exported government spending per capita vs. life expectancy chart and data")
+
 
 
 def _add_roll_avgs(
@@ -148,9 +162,10 @@ def chart_bar_immunisation(ghed_df: pd.DataFrame) -> None:
 
 
 if __name__ == "__main__":
-    GHED_DF = get_ghed()
+    # GHED_DF = get_ghed()
 
-    available_pct_full = get_available_indicators_by_country_year(GHED_DF)
-    che_le = get_che_life_expectancy(GHED_DF)
 
-    chart_bar_immunisation(GHED_DF)
+    scatter_gghe_pc_vs_life_expectancy(GHED_DF)
+
+    # heatmap_available_indicators(GHED_DF)
+    # chart_bar_immunisation(GHED_DF)
