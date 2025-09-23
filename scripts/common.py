@@ -58,9 +58,7 @@ def merge_ghed(
     ghed_df: pd.DataFrame,
     ghed_indicators: list,
     df2: pd.DataFrame,
-    df2_indicators: list,
-    file_name: str = None,
-    save_csv=True,
+    df2_indicators: list
 ) -> pd.DataFrame:
 
     ghed_df = filter_ghed_indicators(ghed_df, ghed_indicators)
@@ -72,12 +70,6 @@ def merge_ghed(
     all_indicators = ghed_indicators + df2_indicators
 
     avg_df = avg_with_complete_years(full_df, all_indicators)
-
-    if save_csv:
-        avg_df.to_csv(
-            Paths.output / f"{file_name}.csv",
-            index=False,
-        )
 
     return avg_df
 
