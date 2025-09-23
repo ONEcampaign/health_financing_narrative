@@ -3,7 +3,7 @@ import pandas as pd
 from bblocks.data_importers import GHED
 from bblocks.places import resolve_places
 
-from config import Paths
+from scripts.config import Paths
 
 
 def get_ghed() -> pd.DataFrame:
