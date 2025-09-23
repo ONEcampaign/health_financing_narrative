@@ -8,3 +8,6 @@ class Paths:
     raw_data = project / "raw_data"
     output = project / "output"
     scripts = project / "scripts"
+
+    population = raw_data / "un_population.csv"
+    life_expectancy = raw_data / "who_life_expectancy.csv"
