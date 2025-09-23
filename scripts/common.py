@@ -58,7 +58,7 @@ def merge_ghed(
     ghed_df: pd.DataFrame,
     ghed_indicators: list,
     df2: pd.DataFrame,
-    df2_indicators: list
+    df2_indicators: list,
 ) -> pd.DataFrame:
 
     ghed_df = filter_ghed_indicators(ghed_df, ghed_indicators)
@@ -177,4 +177,25 @@ def compute_per_capita(
     df = df.copy()
     for c in cols:
         df[f"{c}_{suffix}"] = df[c] * factor / df[pop_col]
+    return df
+
+
+def filter_group_owid_data(
+    df: pd.DataFrame, min_year: int = 2000, max_year: int = 2023
+) -> pd.DataFrame:
+    df = df.copy()
+
+    val_col = df.columns[3]
+
+    df = df.query("Year >= @min_year and Year <= @max_year")
+
+    complete_entities = (
+        df.groupby("Entity")["Year"].nunique().loc[lambda x: x == 24].index
+    )
+
+    df = df[df["Entity"].isin(complete_entities)]
+
+    # Now calculate the mean value (or apply your aggregation)
+    df = df.groupby("Entity", observed=True, dropna=False)[val_col].mean().reset_index()
+
     return df
