@@ -3,7 +3,7 @@ import pandas as pd
 from bblocks.data_importers import GHED
 from bblocks.places import resolve_places
 
-from config import Paths
+from scripts.config import Paths
 
 
 def get_ghed() -> pd.DataFrame:
@@ -25,7 +25,9 @@ def filter_ghed_indicators(
     return df
 
 
-def add_country_info(df: pd.DataFrame, country_column: str = "iso3_code") -> pd.DataFrame:
+def add_country_info(
+    df: pd.DataFrame, country_column: str = "iso3_code"
+) -> pd.DataFrame:
 
     if country_column != "iso3_code":
         df["iso3_code"] = resolve_places(
