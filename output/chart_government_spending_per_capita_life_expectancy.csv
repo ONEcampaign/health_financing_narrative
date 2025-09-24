@@ -1,4 +1,4 @@
-country_name,iso3_code,region,income_level,gghed_usd2022_pc,Life expectancy (years),year
+country_name,iso3_code,region,income_level,gghed_usd2022_pc,life_expectancy,year
 Afghanistan,AFG,Asia,Low income,2.6709059596255744,60.175000000000004,2010-2021
 Albania,ALB,Europe,Upper middle income,146.41490838051348,77.35000000000001,2010-2021
 Algeria,DZA,Africa,Upper middle income,184.8262681491966,75.80833333333334,2010-2021
