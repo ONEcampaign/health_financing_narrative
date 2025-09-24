@@ -173,6 +173,7 @@ def scatter_gdp_vs_child_mortality() -> None:
     child_mortality_raw = pd.read_csv(Paths.child_mortality)
     gdp_pc_raw = pd.read_csv(Paths.gdp_pc)
 
+
     df_combined = child_mortality_raw.merge(gdp_pc_raw, on=base_cols, how="outer")
 
     df = (
