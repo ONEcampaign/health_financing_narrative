@@ -131,3 +131,6 @@ dmypy.json
 
 # Ignore DataSpell
 .idea/
+*.zip
+*.parquet
+/raw_data/oda_reader

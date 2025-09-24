@@ -10,8 +10,7 @@ from scripts.common import (
 from scripts.logger import logger
 
 
-def heatmap_available_indicators(
-    ghed_df: pd.DataFrame) -> None:
+def heatmap_available_indicators(ghed_df: pd.DataFrame) -> None:
 
     available_pct = (
         ghed_df.groupby(["year", "iso3_code"])["value"]
@@ -36,7 +35,9 @@ def heatmap_available_indicators(
         ["country_name", "year"]
     )
 
-    available_pct_full.to_csv(Paths.output / "chart_data_available_indicators.csv", index=False)
+    available_pct_full.to_csv(
+        Paths.output / "chart_data_available_indicators.csv", index=False
+    )
     logger.info("Exported available indicators chart and data")
 
 
@@ -59,24 +60,26 @@ def scatter_gghe_pc_vs_life_expectancy(ghed_df: pd.DataFrame) -> None:
 
     df = merge_ghed(ghed_df, ghed_indicators, le_df, ["Life expectancy (years)"])
 
-    df_download = (df.
-        drop(columns=["iso3_code", "region"])
-        .rename(
-            columns={
-                ghed_indicators[0] : "Government health expenditure per capita",
-                "income_level": "Income level",
-                "country_name": "Country",
-            }
-        )
+    df_download = df.drop(columns=["iso3_code", "region"]).rename(
+        columns={
+            ghed_indicators[0]: "Government health expenditure per capita",
+            "income_level": "Income level",
+            "country_name": "Country",
+        }
     )
 
     # export chart and data
     df_download.to_csv(
-        Paths.output / "chart_data_government_spending_per_capita_life_expectancy.csv", index=False
+        Paths.output / "chart_data_government_spending_per_capita_life_expectancy.csv",
+        index=False,
     )
-    df.to_csv(Paths.output / "chart_government_spending_per_capita_life_expectancy.csv", index=False)
-    logger.info("Exported government spending per capita vs. life expectancy chart and data")
-
+    df.to_csv(
+        Paths.output / "chart_government_spending_per_capita_life_expectancy.csv",
+        index=False,
+    )
+    logger.info(
+        "Exported government spending per capita vs. life expectancy chart and data"
+    )
 
 
 def _add_roll_avgs(
@@ -163,7 +166,6 @@ def chart_bar_immunisation(ghed_df: pd.DataFrame) -> None:
 
 if __name__ == "__main__":
     # GHED_DF = get_ghed()
-
 
     scatter_gghe_pc_vs_life_expectancy(GHED_DF)
 
