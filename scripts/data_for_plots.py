@@ -5,13 +5,13 @@ from scripts.common import (
     get_ghed,
     add_country_info,
     merge_ghed,
+    avg_with_complete_years,
 )
 
 from scripts.logger import logger
 
 
-def heatmap_available_indicators(
-    ghed_df: pd.DataFrame) -> None:
+def heatmap_available_indicators(ghed_df: pd.DataFrame) -> None:
 
     available_pct = (
         ghed_df.groupby(["year", "iso3_code"])["value"]
@@ -36,7 +36,9 @@ def heatmap_available_indicators(
         ["country_name", "year"]
     )
 
-    available_pct_full.to_csv(Paths.output / "chart_data_available_indicators.csv", index=False)
+    available_pct_full.to_csv(
+        Paths.output / "chart_data_available_indicators.csv", index=False
+    )
     logger.info("Exported available indicators chart and data")
 
 
@@ -47,7 +49,7 @@ def scatter_gghe_pc_vs_life_expectancy(ghed_df: pd.DataFrame) -> None:
     le_columns = {
         "SpatialDimValueCode": "iso3_code",
         "Period": "year",
-        "Value": "Life expectancy (years)",
+        "Value": "life_expectancy",
     }
     le_df_raw = pd.read_csv(Paths.life_expectancy)
     le_df_raw["Value"] = le_df_raw["Value"].str.extract(r"^([\d\.]+)").astype(float)
@@ -57,26 +59,29 @@ def scatter_gghe_pc_vs_life_expectancy(ghed_df: pd.DataFrame) -> None:
 
     ghed_indicators = ["gghed_usd2022_pc"]
 
-    df = merge_ghed(ghed_df, ghed_indicators, le_df, ["Life expectancy (years)"])
+    df = merge_ghed(ghed_df, ghed_indicators, le_df, ["life_expectancy"])
 
-    df_download = (df.
-        drop(columns=["iso3_code", "region"])
-        .rename(
-            columns={
-                ghed_indicators[0] : "Government health expenditure per capita",
-                "income_level": "Income level",
-                "country_name": "Country",
-            }
-        )
+    df_download = df.drop(columns=["iso3_code", "region"]).rename(
+        columns={
+            ghed_indicators[0]: "Government health expenditure per capita",
+            "life_expectancy": "Life expectancy (years)",
+            "income_level": "Income level",
+            "country_name": "Country",
+        }
     )
 
     # export chart and data
     df_download.to_csv(
-        Paths.output / "chart_data_government_spending_per_capita_life_expectancy.csv", index=False
+        Paths.output / "chart_data_government_spending_per_capita_life_expectancy.csv",
+        index=False,
     )
-    df.to_csv(Paths.output / "chart_government_spending_per_capita_life_expectancy.csv", index=False)
-    logger.info("Exported government spending per capita vs. life expectancy chart and data")
-
+    df.to_csv(
+        Paths.output / "chart_government_spending_per_capita_life_expectancy.csv",
+        index=False,
+    )
+    logger.info(
+        "Exported government spending per capita vs. life expectancy chart and data"
+    )
 
 
 def _add_roll_avgs(
@@ -161,11 +166,57 @@ def chart_bar_immunisation(ghed_df: pd.DataFrame) -> None:
     logger.info("Exported immunisation external share chart and data")
 
 
-if __name__ == "__main__":
-    # GHED_DF = get_ghed()
+def scatter_gdp_vs_child_mortality() -> None:
 
+    base_cols = ["Entity", "Code", "Year"]
+
+    child_mortality_raw = pd.read_csv(Paths.child_mortality)
+    gdp_pc_raw = pd.read_csv(Paths.gdp_pc)
+
+    df_combined = child_mortality_raw.merge(gdp_pc_raw, on=base_cols, how="outer")
+
+    df = (
+        df_combined.dropna()
+        .query("Year >= 2000 and Year <= 2023")
+        .rename(
+            columns={
+                "Entity": "country_name",
+                "Code": "iso3_code",
+                "Year": "year",
+                "Child mortality rate of children aged under five years, per 100 live births": "child_mortality",
+                "GDP per capita, PPP (constant 2021 international $)": "gdp_pc",
+            }
+        )
+    )
+
+    df = add_country_info(df)
+    df = avg_with_complete_years(
+        df, ["child_mortality", "gdp_pc"], start_year=2000, end_year=2023
+    )
+
+    df = df.drop(columns=["iso3_code", "income_level"])
+    df_download = df.rename(
+        columns={
+            "country_name": "Country",
+            "region": "Region",
+            "child_mortality": "Child mortality",
+            "gdp_pc": "GDP per capita",
+            "year": "Years",
+        }
+    )
+
+    # export chart and data
+    df_download.to_csv(
+        Paths.output / "chart_data_gdp_vs_child_mortality.csv", index=False
+    )
+    df.to_csv(Paths.output / "chart_gdp_vs_child_mortality.csv", index=False)
+    logger.info("Exported GDP vs child mortality chart and data")
+
+
+if __name__ == "__main__":
+    GHED_DF = get_ghed()
 
     scatter_gghe_pc_vs_life_expectancy(GHED_DF)
-
-    # heatmap_available_indicators(GHED_DF)
-    # chart_bar_immunisation(GHED_DF)
+    scatter_gdp_vs_child_mortality()
+    heatmap_available_indicators(GHED_DF)
+    chart_bar_immunisation(GHED_DF)
