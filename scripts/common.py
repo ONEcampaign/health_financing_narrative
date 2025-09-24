@@ -58,7 +58,7 @@ def merge_ghed(
     ghed_df: pd.DataFrame,
     ghed_indicators: list,
     df2: pd.DataFrame,
-    df2_indicators: list
+    df2_indicators: list,
 ) -> pd.DataFrame:
 
     ghed_df = filter_ghed_indicators(ghed_df, ghed_indicators)
