@@ -1,4 +1,3 @@
-# Project title
-Project description
+# Health financing product narrative
 
-This template is configured to manage dependencies with UV.
+This project compiles the data for the story [Unlocking the health financing black boc]{https://data.one.org/analysis/unlocking-the-health-financing-black-box) story. 
